@@ -1,0 +1,71 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+
+# Environment files (contain secrets)
+.env
+.env.*
+!.env.example
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+
+# All build outputs (users should build their own)
+**/build/
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+**/ios/build/
+**/macos/build/
+**/linux/build/
+**/windows/build/
+**/web/build/
+
+# Generated files
+lib/generated_plugin_registrant.dart
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral/
+**/macos/Flutter/ephemeral/
+**/linux/flutter/ephemeral/
+**/windows/flutter/ephemeral/
+**/ios/Runner/GeneratedPluginRegistrant.*
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Secrets and API keys
+**/ios/Runner/GoogleService-Info.plist
+**/android/app/google-services.json
+**/firebase_options.dart
+**/lib/firebase_options.dart
+
+# Coverage
+coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json

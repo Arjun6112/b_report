@@ -1,7 +1,9 @@
 import 'package:bloodsage/data/models/report_parameter.dart';
+import 'package:bloodsage/data/models/medical_report.dart';
 import 'package:bloodsage/presentation/cubit/report_cubit.dart';
 import 'package:bloodsage/presentation/cubit/report_state.dart';
 import 'package:bloodsage/presentation/widgets/parameter_card.dart';
+import 'package:bloodsage/presentation/widgets/history_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -17,7 +19,11 @@ class HomeScreen extends StatelessWidget {
         title: const Text('BloodSage'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.medical_information),
+            icon: Image.asset(
+              'assets/icons/blood_sage.png',
+              width: 32,
+              height: 32,
+            ),
             onPressed: () {
               _showDiagnosisBottomSheet(context);
             },
@@ -25,21 +31,14 @@ class HomeScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.history),
             onPressed: () {
-              // TODO: Navigate to report history screen
+              _showHistoryDialog(context);
             },
           ),
         ],
       ),
       body: BlocConsumer<ReportCubit, ReportState>(
         listener: (context, state) {
-          if (state is ReportFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.error),
-                backgroundColor: Theme.of(context).colorScheme.error,
-              ),
-            );
-          }
+          // Remove snackbar listeners
         },
         builder: (context, state) {
           return ListView(
@@ -130,6 +129,18 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _showHistoryDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => HistoryDialog(
+        onReportSelected: (report) {
+          // Load the selected report into the cubit
+          context.read<ReportCubit>().loadReportParameters(report.parameters);
+        },
+      ),
+    );
+  }
 }
 
 // Custom bottom sheet widget for diagnosis
@@ -193,13 +204,13 @@ class _DiagnosisBottomSheetState extends State<DiagnosisBottomSheet>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    Icons.medical_information,
-                    color: colorScheme.onPrimaryContainer,
-                    size: 28,
+                  child: Image.asset(
+                    'assets/icons/blood_sage.png',
+                    width: 28,
+                    height: 28,
                   ),
                 ),
                 const SizedBox(width: 16),

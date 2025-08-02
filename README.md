@@ -224,36 +224,6 @@ We welcome contributions to BloodSage! Here's how you can help:
 | fl_chart                      | ^0.66.2 | Data visualization |
 | google_fonts                  | ^6.1.0  | Typography         |
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-If you encounter any issues or have questions:
-
-1. **Check the [Issues](https://github.com/Arjun6112/b_report/issues)** section
-2. **Create a new issue** if your problem isn't already reported
-3. **Provide detailed information** about the problem
-
-## 🙏 Acknowledgments
-
-- **Google AI Team** for the powerful Gemini API
-- **Google ML Kit** for excellent OCR capabilities
-- **Flutter Team** for the amazing framework
-- **Medical Community** for guidance on health parameter interpretation
-
-## 🔮 Roadmap
-
-- [ ] **Multi-language Support** - Support for multiple languages
-- [ ] **Advanced Charts** - More detailed health trend visualizations
-- [ ] **Export Features** - PDF report generation
-- [ ] **Medication Tracking** - Track prescribed medications
-- [ ] **Doctor Sharing** - Secure sharing with healthcare providers
-- [ ] **Health Goals** - Set and track personal health objectives
-
----
-
 <div align="center">
   <h3>🩺 Take Control of Your Health with BloodSage 🩺</h3>
   <p><i>Making medical reports understandable for everyone</i></p>

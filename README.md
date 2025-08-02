@@ -53,11 +53,29 @@ BloodSage is an intelligent mobile application that revolutionizes how you under
 
 ### 📦 APK Download
 
-You can download the latest version of BloodSage directly:
+Download the latest version of BloodSage from GitHub Releases:
 
-**[📱 Download BloodSage Debug APK](./apk/BloodSage-debug.apk)**
+**[📱 Download Latest APK from Releases](https://github.com/Arjun6112/b_report/releases)**
 
-> **Note**: This is a debug version. For production use, please build from source or wait for the official release.
+> **Note**: APK files are distributed through GitHub Releases due to file size limitations. Check the releases page for the latest version.
+
+### 🏗️ Alternative: Build Your Own APK
+
+If you prefer to build the APK yourself:
+
+```bash
+# Clone and navigate to the project
+git clone https://github.com/Arjun6112/b_report.git
+cd b_report
+
+# Install dependencies
+flutter pub get
+
+# Build APK (debug version)
+flutter build apk --debug
+
+# Your APK will be at: build/app/outputs/flutter-apk/app-debug.apk
+```
 
 ### 🔧 Build from Source
 

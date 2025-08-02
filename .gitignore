@@ -69,3 +69,7 @@ app.*.symbols
 
 # Obfuscation related
 app.*.map.json
+
+# APK files (too large for GitHub)
+apk/
+*.apk

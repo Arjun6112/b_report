@@ -52,6 +52,67 @@ class _HistoryDialogState extends State<HistoryDialog> {
     }
   }
 
+  Future<void> _editReportName(int index) async {
+    final report = reports[index];
+    final TextEditingController controller =
+        TextEditingController(text: report.labName);
+
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text('Edit Report Name'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Report Name',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.black,
+            ),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (newName != null && newName.isNotEmpty && newName != report.labName) {
+      try {
+        // Create updated report with new name
+        final updatedReport = MedicalReport(
+          id: report.id,
+          reportDate: report.reportDate,
+          labName: newName,
+          parameters: report.parameters,
+        );
+
+        // Update in repository
+        await _repository.updateReport(updatedReport);
+
+        // Update local list
+        setState(() {
+          reports[index] = updatedReport;
+        });
+      } catch (e) {
+        // Error updating report name - silently fail
+      }
+    }
+
+    controller.dispose();
+  }
+
   void _showDeleteConfirmation(int index) {
     showDialog(
       context: context,
@@ -83,7 +144,48 @@ class _HistoryDialogState extends State<HistoryDialog> {
   }
 
   String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    // Convert to 12-hour format
+    int hour12 =
+        date.hour == 0 ? 12 : (date.hour > 12 ? date.hour - 12 : date.hour);
+    String period = date.hour >= 12 ? 'PM' : 'AM';
+
+    // Get day with suffix
+    String dayWithSuffix = _getDayWithSuffix(date.day);
+
+    // Get month name
+    List<String> months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
+    String monthName = months[date.month - 1];
+
+    return '$hour12 $period, $dayWithSuffix $monthName';
+  }
+
+  String _getDayWithSuffix(int day) {
+    if (day >= 11 && day <= 13) {
+      return '${day}th';
+    }
+    switch (day % 10) {
+      case 1:
+        return '${day}st';
+      case 2:
+        return '${day}nd';
+      case 3:
+        return '${day}rd';
+      default:
+        return '${day}th';
+    }
   }
 
   @override
@@ -230,12 +332,12 @@ class _HistoryDialogState extends State<HistoryDialog> {
                           ),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(8),
                           itemCount: reports.length,
                           itemBuilder: (context, index) {
                             final report = reports[index];
                             return Container(
-                              margin: const EdgeInsets.only(bottom: 12),
+                              margin: const EdgeInsets.only(bottom: 8),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(8),
@@ -251,116 +353,152 @@ class _HistoryDialogState extends State<HistoryDialog> {
                                   ),
                                 ],
                               ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.all(16),
-                                leading: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.medical_information_rounded,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
-                                title: Text(
-                                  report.labName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16,
-                                    color: Color(0xFF111827),
-                                  ),
-                                ),
-                                subtitle: Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.calendar_today,
-                                            size: 14,
-                                            color: Color(0xFF6B7280),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            _formatDate(report.reportDate),
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Color(0xFF6B7280),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.analytics_outlined,
-                                            size: 14,
-                                            color: Color(0xFF6B7280),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '${report.parameters.length} parameters',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Color(0xFF6B7280),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
                                   children: [
+                                    // Leading icon
                                     Container(
+                                      padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(
-                                        color: Colors.grey.withOpacity(0.1),
+                                        color: Colors.black,
                                         borderRadius: BorderRadius.circular(6),
                                       ),
-                                      child: IconButton(
-                                        icon: const Icon(
-                                          Icons.visibility_rounded,
-                                          color: Colors.black,
-                                          size: 20,
-                                        ),
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                          widget.onReportSelected(report);
-                                        },
-                                        tooltip: 'View Report',
+                                      child: const Icon(
+                                        Icons.medical_information_rounded,
+                                        color: Colors.white,
+                                        size: 18,
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(6),
+                                    const SizedBox(width: 12),
+                                    // Content
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            report.labName,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15,
+                                              color: Color(0xFF111827),
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.calendar_today,
+                                                size: 12,
+                                                color: Color(0xFF6B7280),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              SizedBox(
+                                                width: 100,
+                                                child: Text(
+                                                  _formatDate(
+                                                      report.reportDate),
+                                                  style: const TextStyle(
+                                                    fontSize: 11,
+                                                    color: Color(0xFF6B7280),
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Icon(
+                                                Icons.analytics_outlined,
+                                                size: 12,
+                                                color: Color(0xFF6B7280),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${report.parameters.length} parameters',
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: Color(0xFF6B7280),
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ),
-                                      child: IconButton(
-                                        icon: const Icon(
-                                          Icons.delete_rounded,
-                                          color: Colors.black,
-                                          size: 20,
+                                    ),
+                                    // Actions menu
+                                    PopupMenuButton<String>(
+                                      icon: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
                                         ),
-                                        onPressed: () =>
-                                            _showDeleteConfirmation(index),
-                                        tooltip: 'Delete Report',
+                                        child: const Icon(
+                                          Icons.more_vert,
+                                          color: Colors.black,
+                                          size: 18,
+                                        ),
                                       ),
+                                      onSelected: (value) {
+                                        switch (value) {
+                                          case 'view':
+                                            Navigator.pop(context);
+                                            widget.onReportSelected(report);
+                                            break;
+                                          case 'edit':
+                                            _editReportName(index);
+                                            break;
+                                          case 'delete':
+                                            _showDeleteConfirmation(index);
+                                            break;
+                                        }
+                                      },
+                                      itemBuilder: (context) => [
+                                        const PopupMenuItem(
+                                          value: 'view',
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.visibility_rounded,
+                                                  size: 18),
+                                              SizedBox(width: 12),
+                                              Text('View Report'),
+                                            ],
+                                          ),
+                                        ),
+                                        const PopupMenuItem(
+                                          value: 'edit',
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.edit_rounded,
+                                                  size: 18),
+                                              SizedBox(width: 12),
+                                              Text('Edit Name'),
+                                            ],
+                                          ),
+                                        ),
+                                        const PopupMenuItem(
+                                          value: 'delete',
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.delete_rounded,
+                                                  size: 18, color: Colors.red),
+                                              SizedBox(width: 12),
+                                              Text('Delete',
+                                                  style: TextStyle(
+                                                      color: Colors.red)),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  widget.onReportSelected(report);
-                                },
                               ),
                             );
                           },

@@ -20,7 +20,7 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: Image.asset(
-              'assets/icons/blood_sage.png',
+              'assets/icons/ai-stars.png',
               width: 32,
               height: 32,
             ),
@@ -208,7 +208,7 @@ class _DiagnosisBottomSheetState extends State<DiagnosisBottomSheet>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Image.asset(
-                    'assets/icons/blood_sage.png',
+                    'assets/icons/ai-stars.png',
                     width: 28,
                     height: 28,
                   ),

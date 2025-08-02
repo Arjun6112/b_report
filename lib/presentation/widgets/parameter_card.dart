@@ -21,7 +21,12 @@ class ParameterCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(parameter.name, style: textTheme.titleMedium),
+                  SizedBox(
+                      width: 220,
+                      child: Text(
+                          overflow: TextOverflow.ellipsis,
+                          parameter.name,
+                          style: textTheme.titleMedium)),
                   _StatusBadge(status: parameter.status),
                 ],
               ),

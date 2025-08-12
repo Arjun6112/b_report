@@ -34,11 +34,81 @@ class AnalysisService {
       final Map<String, dynamic> jsonResponse = jsonDecode(response.text!);
       final List<dynamic> results = jsonResponse['results'] ?? [];
 
-      return results.map((item) => ReportParameter.fromJson(item)).toList();
+      // Convert to ReportParameter objects and apply secondary validation
+      final parameters = results.map((item) => ReportParameter.fromJson(item)).toList();
+      
+      // Apply secondary validation to ensure accurate status determination
+      final validatedParameters = parameters.map((param) => _validateParameterStatus(param)).toList();
+
+      return validatedParameters;
     } catch (e) {
       debugPrint("Error parsing report with LLM: $e");
       return []; // Return an empty list on error
     }
+  }
+
+  /// Secondary validation to ensure accurate status determination
+  ReportParameter _validateParameterStatus(ReportParameter param) {
+    // If the range is available and the value is numeric, double-check the status
+    if (param.normalRange != 'N/A' && param.normalRange.isNotEmpty) {
+      final correctedStatus = _determineStatusFromRange(param.value, param.normalRange);
+      if (correctedStatus != null && correctedStatus != param.status) {
+        debugPrint("🔧 Correcting status for ${param.name}: ${param.status.name} -> ${correctedStatus.name}");
+        return ReportParameter(
+          name: param.name,
+          value: param.value,
+          units: param.units,
+          normalRange: param.normalRange,
+          aiSummary: param.aiSummary,
+          status: correctedStatus,
+        );
+      }
+    }
+    return param;
+  }
+
+  /// Determine status by parsing numeric ranges and values
+  ParameterStatus? _determineStatusFromRange(String value, String range) {
+    try {
+      // Try to parse the value as a number
+      final numericValue = double.tryParse(value.replaceAll(RegExp(r'[^\d.-]'), ''));
+      if (numericValue == null) return null;
+
+      // Parse range formats like "13.5 - 17.5", "< 10", "> 5", "13.5-17.5", etc.
+      if (range.contains('-')) {
+        final rangeParts = range.split('-');
+        if (rangeParts.length == 2) {
+          final lowerBound = double.tryParse(rangeParts[0].replaceAll(RegExp(r'[^\d.]'), ''));
+          final upperBound = double.tryParse(rangeParts[1].replaceAll(RegExp(r'[^\d.]'), ''));
+          
+          if (lowerBound != null && upperBound != null) {
+            if (numericValue < lowerBound) return ParameterStatus.low;
+            if (numericValue > upperBound) return ParameterStatus.high;
+            return ParameterStatus.normal;
+          }
+        }
+      }
+      
+      // Handle ranges like "< 10" or "<10"
+      if (range.contains('<')) {
+        final upperBound = double.tryParse(range.replaceAll(RegExp(r'[^\d.]'), ''));
+        if (upperBound != null) {
+          return numericValue <= upperBound ? ParameterStatus.normal : ParameterStatus.high;
+        }
+      }
+      
+      // Handle ranges like "> 5" or ">5"
+      if (range.contains('>')) {
+        final lowerBound = double.tryParse(range.replaceAll(RegExp(r'[^\d.]'), ''));
+        if (lowerBound != null) {
+          return numericValue >= lowerBound ? ParameterStatus.normal : ParameterStatus.low;
+        }
+      }
+    } catch (e) {
+      debugPrint("Error parsing range: $e");
+    }
+    
+    return null; // Could not determine status from range
   }
 
   String _createParsingPrompt(String structuredTextJson) {
@@ -54,13 +124,21 @@ class AnalysisService {
     - "value": The measured value of the test (e.g., "12.0" or "Negative").
     - "units": The units for the value (e.g., "g/dL" or "%"). If no units are present, use "N/A".
     - "range": The reference range for the test (e.g., "13.5 - 17.5"). If no range is present, use "N/A".
-    - "status": Analyze the value against the range and determine if it's "low", "normal", "high", or "unknown". For non-numeric values like "Negative/Positive", use "normal" for negative and "high" for positive results.
+    - "status": CRITICALLY IMPORTANT - Analyze the value against the range and determine if it's "low", "normal", "high", or "unknown". 
     - "summary": Provide a brief 1-2 sentence medical explanation of what this test measures and what the current result indicates. Keep it simple and patient-friendly.
 
-    For the status determination:
-    - Compare numeric values against the provided range
-    - For text values like "Negative", "Positive", "Absent", "Present" - use your medical knowledge
-    - If no range is available, use "unknown"
+    For the status determination, be VERY careful and precise:
+    - For numeric values: Compare the exact number against the range bounds
+      * If value < lower bound = "low"
+      * If value > upper bound = "high" 
+      * If value is within bounds = "normal"
+      * Example: Value 14.5 with range "13.5 - 17.5" = "normal" (NOT high)
+    - For text values: 
+      * "Negative", "Absent", "Not Detected" = "normal"
+      * "Positive", "Present", "Detected" = "high"
+    - If no range is available or you cannot determine, use "unknown"
+    
+    DOUBLE-CHECK your status determination. A value of 14.5 in a range of 13.5-17.5 is NORMAL, not high.
 
     Do not include any tests that do not have a clear value. Do not invent any data.
 

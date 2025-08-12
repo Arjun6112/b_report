@@ -19,22 +19,29 @@ class ReportCubit extends Cubit<ReportState> {
     try {
       emit(ReportLoading());
 
-      // 1. Pick a file
+      // 1. Pick files (now supports multiple selection)
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'png', 'jpg'],
+        allowedExtensions: [
+          'pdf',
+          'png',
+          'jpg',
+          'jpeg'
+        ], // Supports both images and PDFs
+        allowMultiple: true, // Enable multiple file selection
       );
 
       if (result != null) {
-        final file = result.files.first;
+        final files = result.files;
 
-        // --- New Workflow ---
+        // --- Enhanced Workflow for Multiple Files ---
 
-        // 2. Extract structured text with coordinates from the report
-        final structuredText = await _ocrService.extractStructuredText(file);
+        // 2. Extract structured text with coordinates from all files
+        final structuredText =
+            await _ocrService.extractStructuredTextFromFiles(files);
 
         if (structuredText.isEmpty) {
-          throw Exception("OCR could not find any text in the document.");
+          throw Exception("OCR could not find any text in the documents.");
         }
 
         // 3. Send the entire structured text to the LLM for parsing in one call
@@ -43,14 +50,15 @@ class ReportCubit extends Cubit<ReportState> {
 
         if (analyzedParameters.isEmpty) {
           throw Exception(
-              "The report could not be analyzed. Please try a clearer image.");
+              "The report(s) could not be analyzed. Please try clearer images.");
         }
 
         // 4. Emit success with the list of parameters returned by the LLM
         emit(ReportSuccess(analyzedParameters));
 
-        // 5. Save the report to history
-        await _saveReportToHistory(analyzedParameters, file.name);
+        // 5. Save the report to history with info about multiple files
+        final fileNames = files.map((f) => f.name).join(', ');
+        await _saveReportToHistory(analyzedParameters, fileNames);
       } else {
         // User canceled the picker
         emit(ReportInitial());

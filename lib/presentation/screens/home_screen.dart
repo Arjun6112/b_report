@@ -64,13 +64,19 @@ class HomeScreen extends StatelessWidget {
                       )
                     : const Icon(Icons.upload_file_outlined),
                 label: Text(
-                  state is ReportLoading
-                      ? 'Processing...'
-                      : 'Upload New Report',
+                  state is ReportLoading ? 'Processing...' : 'Upload Report(s)',
                 ),
                 onPressed: state is ReportLoading
                     ? null
                     : () => context.read<ReportCubit>().processNewReport(),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Supports multiple images (PNG, JPG) and PDF files. Select multiple files to process multi-page reports.',
+                style: textTheme.bodySmall?.copyWith(
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
               _buildReportContent(context, state),

@@ -35,10 +35,12 @@ class AnalysisService {
       final List<dynamic> results = jsonResponse['results'] ?? [];
 
       // Convert to ReportParameter objects and apply secondary validation
-      final parameters = results.map((item) => ReportParameter.fromJson(item)).toList();
-      
+      final parameters =
+          results.map((item) => ReportParameter.fromJson(item)).toList();
+
       // Apply secondary validation to ensure accurate status determination
-      final validatedParameters = parameters.map((param) => _validateParameterStatus(param)).toList();
+      final validatedParameters =
+          parameters.map((param) => _validateParameterStatus(param)).toList();
 
       return validatedParameters;
     } catch (e) {
@@ -51,9 +53,11 @@ class AnalysisService {
   ReportParameter _validateParameterStatus(ReportParameter param) {
     // If the range is available and the value is numeric, double-check the status
     if (param.normalRange != 'N/A' && param.normalRange.isNotEmpty) {
-      final correctedStatus = _determineStatusFromRange(param.value, param.normalRange);
+      final correctedStatus =
+          _determineStatusFromRange(param.value, param.normalRange);
       if (correctedStatus != null && correctedStatus != param.status) {
-        debugPrint("🔧 Correcting status for ${param.name}: ${param.status.name} -> ${correctedStatus.name}");
+        debugPrint(
+            "🔧 Correcting status for ${param.name}: ${param.status.name} -> ${correctedStatus.name}");
         return ReportParameter(
           name: param.name,
           value: param.value,
@@ -71,16 +75,19 @@ class AnalysisService {
   ParameterStatus? _determineStatusFromRange(String value, String range) {
     try {
       // Try to parse the value as a number
-      final numericValue = double.tryParse(value.replaceAll(RegExp(r'[^\d.-]'), ''));
+      final numericValue =
+          double.tryParse(value.replaceAll(RegExp(r'[^\d.-]'), ''));
       if (numericValue == null) return null;
 
       // Parse range formats like "13.5 - 17.5", "< 10", "> 5", "13.5-17.5", etc.
       if (range.contains('-')) {
         final rangeParts = range.split('-');
         if (rangeParts.length == 2) {
-          final lowerBound = double.tryParse(rangeParts[0].replaceAll(RegExp(r'[^\d.]'), ''));
-          final upperBound = double.tryParse(rangeParts[1].replaceAll(RegExp(r'[^\d.]'), ''));
-          
+          final lowerBound =
+              double.tryParse(rangeParts[0].replaceAll(RegExp(r'[^\d.]'), ''));
+          final upperBound =
+              double.tryParse(rangeParts[1].replaceAll(RegExp(r'[^\d.]'), ''));
+
           if (lowerBound != null && upperBound != null) {
             if (numericValue < lowerBound) return ParameterStatus.low;
             if (numericValue > upperBound) return ParameterStatus.high;
@@ -88,26 +95,32 @@ class AnalysisService {
           }
         }
       }
-      
+
       // Handle ranges like "< 10" or "<10"
       if (range.contains('<')) {
-        final upperBound = double.tryParse(range.replaceAll(RegExp(r'[^\d.]'), ''));
+        final upperBound =
+            double.tryParse(range.replaceAll(RegExp(r'[^\d.]'), ''));
         if (upperBound != null) {
-          return numericValue <= upperBound ? ParameterStatus.normal : ParameterStatus.high;
+          return numericValue <= upperBound
+              ? ParameterStatus.normal
+              : ParameterStatus.high;
         }
       }
-      
+
       // Handle ranges like "> 5" or ">5"
       if (range.contains('>')) {
-        final lowerBound = double.tryParse(range.replaceAll(RegExp(r'[^\d.]'), ''));
+        final lowerBound =
+            double.tryParse(range.replaceAll(RegExp(r'[^\d.]'), ''));
         if (lowerBound != null) {
-          return numericValue >= lowerBound ? ParameterStatus.normal : ParameterStatus.low;
+          return numericValue >= lowerBound
+              ? ParameterStatus.normal
+              : ParameterStatus.low;
         }
       }
     } catch (e) {
       debugPrint("Error parsing range: $e");
     }
-    
+
     return null; // Could not determine status from range
   }
 

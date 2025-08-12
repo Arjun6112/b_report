@@ -1,7 +1,8 @@
 // lib/data/services/ocr_service.dart
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart' as mlkit;
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart'
+    as mlkit;
 import 'package:syncfusion_flutter_pdf/pdf.dart' as sf_pdf;
 
 class OcrService {
@@ -53,17 +54,19 @@ class OcrService {
       // Read the PDF file
       final File pdfFile = File(file.path!);
       final List<int> bytes = await pdfFile.readAsBytes();
-      
+
       // Load the PDF document
       final sf_pdf.PdfDocument document = sf_pdf.PdfDocument(inputBytes: bytes);
       final List<Map<String, dynamic>> structuredTextList = [];
-      
+
       // Extract text from each page
       for (int pageIndex = 0; pageIndex < document.pages.count; pageIndex++) {
         // Extract text with layout information
-        final sf_pdf.PdfTextExtractor extractor = sf_pdf.PdfTextExtractor(document);
-        final List<sf_pdf.TextLine> textLines = extractor.extractTextLines(startPageIndex: pageIndex, endPageIndex: pageIndex);
-        
+        final sf_pdf.PdfTextExtractor extractor =
+            sf_pdf.PdfTextExtractor(document);
+        final List<sf_pdf.TextLine> textLines = extractor.extractTextLines(
+            startPageIndex: pageIndex, endPageIndex: pageIndex);
+
         // Convert TextLines to our structured format
         for (final sf_pdf.TextLine textLine in textLines) {
           for (final sf_pdf.TextWord word in textLine.wordCollection) {
@@ -79,13 +82,14 @@ class OcrService {
           }
         }
       }
-      
+
       // Dispose the document
       document.dispose();
-      
+
       return structuredTextList;
     } catch (e) {
-      throw Exception('Error processing PDF: ${e.toString()}. Please ensure the PDF is not password-protected and contains selectable text.');
+      throw Exception(
+          'Error processing PDF: ${e.toString()}. Please ensure the PDF is not password-protected and contains selectable text.');
     }
   }
 
